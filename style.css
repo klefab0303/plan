@@ -1,40 +1,132 @@
+/* Grundlayout */
 body {
-  font-family: Arial, sans-serif;
-  margin: 30px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f2f2f7;
+  color: #222;
+  margin: 0;
+  padding: 0;
 }
 
 h1, h2 {
   text-align: center;
+  color: #333;
 }
 
+section {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Buttons */
 button {
-  margin: 5px;
-  padding: 6px 12px;
+  margin: 8px 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
+button:hover {
+  opacity: 0.9;
+}
+
+/* Spezielle Buttons */
+#knowBtn {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+#dontKnowBtn {
+  background-color: #f44336;
+  color: #fff;
+}
+
+#startTraining, #loadBtn, #resetBtn {
+  background-color: #0077cc;
+  color: #fff;
+}
+
+/* Lektionen */
 #lessons label {
   display: inline-block;
-  margin: 5px;
-}
-
-#flashcard {
-  border: 2px solid #333;
-  padding: 20px;
-  margin: 20px auto;
-  width: 300px;
-  height: 150px;
-  text-align: center;
-  font-size: 24px;
+  margin: 6px 10px;
+  padding: 6px 12px;
+  background-color: #e0e0e0;
+  border-radius: 6px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
-#flashcard-buttons {
+#lessons input[type="checkbox"]:checked + span,
+#lessons input[type="checkbox"]:checked {
+  background-color: #0077cc;
+  color: #fff;
+}
+
+/* Karteikarte */
+#flashcard {
+  border: 3px solid #0077cc;
+  border-radius: 12px;
+  padding: 30px;
+  margin: 20px auto;
+  width: 90%;
+  max-width: 400px;
+  height: 200px;
   text-align: center;
-  margin-bottom: 20px;
+  font-size: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  background-color: #eaf4ff;
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+#flashcard:hover {
+  transform: scale(1.02);
+  background-color: #d0e8ff;
 }
 
 #flashcard #back {
   color: #007700;
   font-weight: bold;
+  white-space: pre-line; /* Zeilenumbruch für Formen + Deutsch */
+}
+
+/* Flashcard Buttons */
+#flashcard-buttons {
+  text-align: center;
+  margin-top: 15px;
+}
+
+/* Statistik */
+#stats p {
+  font-size: 16px;
+  margin: 5px 0;
+  text-align: center;
+}
+
+/* Input Datei */
+input[type="file"] {
+  display: block;
+  margin: 10px auto;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  #flashcard {
+    font-size: 22px;
+    height: 180px;
+  }
+  button {
+    font-size: 14px;
+    padding: 8px 14px;
+  }
 }
