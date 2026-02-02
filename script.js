@@ -105,31 +105,70 @@ document.getElementById("dontKnowBtn").addEventListener("click", () => handleAns
 
 function handleAnswer(known){
     const card = currentCards[currentIndex];
-    if(!stats[card.latein]) stats[card.latein] = {right:0, wrong:0};
-    if(known) stats[card.latein].right++;
-    else stats[card.latein].wrong++;
+    const lektion = card.lektion; // LESSON KEY
+
+    if(!stats[lektion]) stats[lektion] = {right:0, wrong:0, total:0};
+    stats[lektion].total++;
+    if(known) stats[lektion].right++;
+    else stats[lektion].wrong++;
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
     currentIndex++;
     showCard();
 }
 
+
 // Statistik
-function showStats(){
-    const statsDiv = document.getElementById("stats");
-    statsDiv.innerHTML = "";
-    let total=0, right=0;
-    for(const key in stats){
-        total += stats[key].right + stats[key].wrong;
-        right += stats[key].right;
-    }
-    const percent = total===0?0:Math.round((right/total)*100);
-    statsDiv.innerHTML = `<p>Gesamt: ${total} | Richtig: ${right} | Quote: ${percent}%</p>`;
-    for(const key in stats){
-        const s = stats[key];
-        const p = document.createElement("p");
-        p.innerText = `${key}: Richtig ${s.right} / Falsch ${s.wrong}`;
-        statsDiv.appendChild(p);
-    }
+function showStats() {
+    const ctx = document.getElementById('statsChart').getContext('2d');
+
+    const labels = Object.keys(stats).sort((a,b)=>a-b); // Lektionen
+    const rightData = labels.map(l => stats[l].right);
+    const wrongData = labels.map(l => stats[l].wrong);
+    const totalData = labels.map(l => stats[l].total);
+
+    if(window.myChart) window.myChart.destroy(); // vorhandenes Chart löschen
+
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => `Lektion ${l}`),
+            datasets: [
+                {
+                    label: 'Richtig',
+                    data: rightData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                },
+                {
+                    label: 'Falsch',
+                    data: wrongData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)'
+                },
+                {
+                    label: 'Gesamt',
+                    data: totalData,
+                    type: 'line',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: {
+                    display: true,
+                    text: 'Statistik pro Lektion'
+                }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
 }
 
 // Zurück zum Dashboard
