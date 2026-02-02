@@ -6,36 +6,46 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Latein Vokabeltrainer</h1>
 
-  <section id="upload-section">
-    <input type="file" id="csvFile" accept=".csv">
-    <button id="loadBtn">CSV laden</button>
-  </section>
+<h1>Latein Vokabeltrainer</h1>
 
-  <section id="lesson-section" style="display:none">
-    <h2>Lektionen auswählen</h2>
-    <div id="lessons"></div>
-    <button id="startTraining">Weiter</button>
-  </section>
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <h2>Dashboard</h2>
+  <input type="file" id="csvFile" accept=".csv">
+  <button id="uploadCSVBtn">CSV laden</button>
+  <button id="startLessonBtn">Üben</button>
+  <button id="viewStatsBtn">Statistik</button>
+  <button id="resetBtn">Alles zurücksetzen</button>
+</section>
 
-  <section id="flashcard-section" style="display:none">
-    <div id="flashcard">
-      <div id="front"></div>
-      <div id="back" style="display:none"></div>
-    </div>
-    <div id="flashcard-buttons">
-      <button id="knowBtn">Gewusst ✅</button>
-      <button id="dontKnowBtn">Nicht gewusst ❌</button>
-    </div>
-  </section>
+<!-- LEKTIONEN AUSWÄHLEN -->
+<section id="lessonSelect" style="display:none">
+  <h2>Lektionen auswählen</h2>
+  <div id="lessons"></div>
+  <button id="beginTrainingBtn">Weiter</button>
+</section>
 
-  <section id="stats-section" style="display:none">
-    <h2>Statistik</h2>
-    <div id="stats"></div>
-    <button id="resetBtn">Alles zurücksetzen</button>
-  </section>
+<!-- KARTEN MODUS -->
+<section id="flashcards" style="display:none">
+  <div id="progress">Karte 0 von 0</div>
+  <div id="flashcard">
+    <div id="front"></div>
+    <div id="back" style="display:none"></div>
+  </div>
+  <div id="flashcard-buttons">
+    <button id="knowBtn">Gewusst ✅</button>
+    <button id="dontKnowBtn">Nicht gewusst ❌</button>
+  </div>
+</section>
 
-  <script src="script.js"></script>
+<!-- STATISTIK -->
+<section id="statistics" style="display:none">
+  <h2>Statistik</h2>
+  <div id="stats"></div>
+  <button id="backToDashboard">Zurück</button>
+</section>
+
+<script src="script.js"></script>
 </body>
 </html>
