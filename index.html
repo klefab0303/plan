@@ -3,15 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <title>Latein Vokabeltrainer</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>Latein Vokabeltrainer</h1>
 
-  <input type="file" id="csvFile" accept=".csv">
-  <br><br>
-  <button id="startBtn">Üben</button>
+  <section id="upload-section">
+    <input type="file" id="csvFile" accept=".csv">
+    <button id="loadBtn">CSV laden</button>
+  </section>
 
-  <div id="output"></div>
+  <section id="lesson-section" style="display:none">
+    <h2>Lektionen auswählen</h2>
+    <div id="lessons"></div>
+    <button id="startTraining">Weiter</button>
+  </section>
+
+  <section id="flashcard-section" style="display:none">
+    <div id="flashcard">
+      <div id="front"></div>
+      <div id="back" style="display:none"></div>
+    </div>
+    <div id="flashcard-buttons">
+      <button id="knowBtn">Gewusst ✅</button>
+      <button id="dontKnowBtn">Nicht gewusst ❌</button>
+    </div>
+  </section>
+
+  <section id="stats-section" style="display:none">
+    <h2>Statistik</h2>
+    <div id="stats"></div>
+    <button id="resetBtn">Alles zurücksetzen</button>
+  </section>
 
   <script src="script.js"></script>
 </body>
