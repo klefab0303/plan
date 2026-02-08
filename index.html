@@ -2,26 +2,31 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Trainingskalender v2</title>
+  <title>Trainingsplan</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>🏋️ Trainingskalender</h1>
+<h1>Trainingsplan</h1>
 
-<div class="top">
-  <div>📅 Woche: <span id="week">1</span> / 8</div>
-  <div>✅ Fortschritt: <span id="progress">0</span>%</div>
+<table id="week">
+  <tr>
+    <th>Tag</th>
+    <th>Training</th>
+  </tr>
+</table>
+
+<!-- POPUP -->
+<div id="modal" class="hidden">
+  <div class="modal-content">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <button onclick="closeModal()">Schließen</button>
+  </div>
 </div>
 
-<div id="calendar"></div>
-
-<div class="buttons">
-  <button id="prev">⬅ Vorherige Woche</button>
-  <button id="next">Nächste Woche ➡</button>
-</div>
-
-<button id="resetWeek">🔄 Aktuelle Woche zurücksetzen</button>
+<h2>Übungskatalog</h2>
+<div id="catalog"></div>
 
 <script src="script.js"></script>
 </body>
