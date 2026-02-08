@@ -1,109 +1,73 @@
-const TOTAL_WEEKS = 8;
-let currentWeek = Number(localStorage.getItem("week")) || 1;
-
-const plan = {
-  Montag: [
-    "🏠 Bankdrücken 5x8–12",
-    "🏠 Schulterdrücken 4x8–12",
-    "🏠 Liegestütze 4x20–30",
-    "🏠 Enge Liegestütze 3x max",
-    "🏠 Seitheben 3x20",
-    "🏠 Plank 3x60s"
-  ],
-  Dienstag: ["Judo"],
-  Mittwoch: [
-    "🏠 Kniebeugen 5x15–20",
-    "🏠 Bulgarian Split Squats 4x10",
-    "🏠 Hip Thrusts 4x15",
-    "🏠 Wadenheben 4x20",
-    "🏠 Hollow Hold 3x40s"
-  ],
-  Donnerstag: [
-    "🌳 Klimmzüge 6x max",
-    "🌳 Australian Rows 5x15",
-    "🌳 Chin-Ups 4x max",
-    "🌳 Dead Hang 4x60s"
-  ],
+const weekPlan = {
+  Montag: ["Schwimmen"],
+  Dienstag: ["Bankdrücken", "Schulterdrücken", "Liegestütze"],
+  Mittwoch: ["Kniebeugen", "Hip Thrusts"],
+  Donnerstag: ["Klimmzüge", "Australian Rows"],
   Freitag: ["Judo"],
-  Samstag: [
-    "🌳 Dips 6x6–10",
-    "🌳 Explosive Liegestütze 4x15",
-    "🌳 Pike Push-ups 4x12",
-    "🌳 L-Sit 4x20s"
-  ],
-  Sonntag: ["Erholung / Mobility"]
+  Samstag: ["Dips", "Pike Push-ups"],
+  Sonntag: ["Erholung"]
 };
 
-const calendar = document.getElementById("calendar");
-const weekEl = document.getElementById("week");
-const progressEl = document.getElementById("progress");
+const exerciseData = {
+  "Bankdrücken": {
+    reps: "5×8–12",
+    link: "https://www.youtube.com/results?search_query=bankdrücken+technik",
+    desc: "Grundübung für Brust, Schulter, Trizeps."
+  },
+  "Klimmzüge": {
+    reps: "6× max",
+    link: "https://www.youtube.com/results?search_query=klimmzüge+technik",
+    desc: "Beste Rückenübung mit Eigengewicht."
+  },
+  "Dips": {
+    reps: "6×6–10",
+    link: "https://www.youtube.com/results?search_query=dips+technik",
+    desc: "Push-Übung für Brust & Trizeps."
+  }
+};
 
-function storageKey(day, ex) {
-  return `w${currentWeek}-${day}-${ex}`;
+// Tabelle bauen
+const table = document.getElementById("week");
+for (const day in weekPlan) {
+  const row = table.insertRow();
+  row.insertCell().textContent = day;
+  const cell = row.insertCell();
+  cell.textContent = weekPlan[day].join(", ");
+  cell.onclick = () => openModal(day);
 }
 
-function render() {
-  calendar.innerHTML = "";
-  weekEl.textContent = currentWeek;
+// Modal
+function openModal(day) {
+  document.getElementById("modal").classList.remove("hidden");
+  document.getElementById("modal-title").textContent = day;
+  const body = document.getElementById("modal-body");
+  body.innerHTML = "";
 
-  let done = 0;
-  let total = 0;
-
-  for (const day in plan) {
-    const div = document.createElement("div");
-    div.className = "day";
-    div.innerHTML = `<h3>${day}</h3>`;
-
-    plan[day].forEach(ex => {
-      total++;
-      const key = storageKey(day, ex);
-      const checked = localStorage.getItem(key) === "true";
-      if (checked) done++;
-
-      const row = document.createElement("div");
-      row.className = "exercise";
-      row.innerHTML = `
-        <span>${ex}</span>
-        <input type="checkbox" ${checked ? "checked" : ""}>
-      `;
-
-      row.querySelector("input").addEventListener("change", e => {
-        localStorage.setItem(key, e.target.checked);
-        render();
-      });
-
-      div.appendChild(row);
-    });
-
-    calendar.appendChild(div);
-  }
-
-  progressEl.textContent = Math.round((done / total) * 100);
+  weekPlan[day].forEach(ex => {
+    const data = exerciseData[ex] || {};
+    body.innerHTML += `
+      <div class="exercise">
+        <strong>${ex}</strong> (${data.reps || "—"})<br>
+        Ist: <input placeholder="z.B. 15"><br>
+        <a href="${data.link || "#"}" target="_blank">Zur Erklärung</a>
+      </div>
+    `;
+  });
 }
 
-document.getElementById("next").onclick = () => {
-  if (currentWeek < TOTAL_WEEKS) {
-    currentWeek++;
-    localStorage.setItem("week", currentWeek);
-    render();
-  }
-};
+function closeModal() {
+  document.getElementById("modal").classList.add("hidden");
+}
 
-document.getElementById("prev").onclick = () => {
-  if (currentWeek > 1) {
-    currentWeek--;
-    localStorage.setItem("week", currentWeek);
-    render();
-  }
-};
-
-document.getElementById("resetWeek").onclick = () => {
-  for (const day in plan) {
-    plan[day].forEach(ex => {
-      localStorage.removeItem(storageKey(day, ex));
-    });
-  }
-  render();
-};
-
-render();
+// Katalog
+const catalog = document.getElementById("catalog");
+for (const ex in exerciseData) {
+  const d = exerciseData[ex];
+  catalog.innerHTML += `
+    <details>
+      <summary>${ex}</summary>
+      <p>${d.desc}</p>
+      <a href="${d.link}" target="_blank">Video</a>
+    </details>
+  `;
+}
