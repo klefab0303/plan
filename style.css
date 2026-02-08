@@ -1,54 +1,68 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #0f0f0f;
+  font-family: system-ui, sans-serif;
+  background: #111;
   color: #fff;
-  padding: 20px;
-  max-width: 800px;
+  max-width: 900px;
   margin: auto;
+  padding: 20px;
 }
 
 h1 {
   text-align: center;
+  margin-bottom: 30px;
 }
 
-.top {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  font-weight: bold;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 40px;
 }
 
-.day {
-  background: #1c1c1c;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 10px;
+th, td {
+  border: 1px solid #333;
+  padding: 12px;
 }
 
-.exercise {
-  display: flex;
-  justify-content: space-between;
-  margin: 6px 0;
-}
-
-.buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-button {
-  flex: 1;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
+td {
   cursor: pointer;
 }
 
-#resetWeek {
-  margin-top: 15px;
+td:hover {
+  background: #222;
+}
+
+#modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #1c1c1c;
+  padding: 20px;
+  border-radius: 10px;
   width: 100%;
-  background: #b30000;
-  color: white;
+  max-width: 500px;
+}
+
+.exercise {
+  margin-bottom: 15px;
+}
+
+.exercise input {
+  width: 60px;
+}
+
+details {
+  background: #1c1c1c;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
 }
