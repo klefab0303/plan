@@ -1,591 +1,109 @@
-// LocalStorage Keys
-const VOCABULARIES_KEY = "latin-vocab-vocabularies";
-const PRACTICE_RESULTS_KEY = "latin-vocab-practice-results";
+const TOTAL_WEEKS = 8;
+let currentWeek = Number(localStorage.getItem("week")) || 1;
 
-// State
-let vocabularies = [];
-let practiceResults = [];
-let selectedLessons = [];
-let currentPracticeCards = [];
-let currentCardIndex = 0;
-let sessionResults = { known: 0, unknown: 0, wrongCards: [] };
+const plan = {
+  Montag: [
+    "🏠 Bankdrücken 5x8–12",
+    "🏠 Schulterdrücken 4x8–12",
+    "🏠 Liegestütze 4x20–30",
+    "🏠 Enge Liegestütze 3x max",
+    "🏠 Seitheben 3x20",
+    "🏠 Plank 3x60s"
+  ],
+  Dienstag: ["Judo"],
+  Mittwoch: [
+    "🏠 Kniebeugen 5x15–20",
+    "🏠 Bulgarian Split Squats 4x10",
+    "🏠 Hip Thrusts 4x15",
+    "🏠 Wadenheben 4x20",
+    "🏠 Hollow Hold 3x40s"
+  ],
+  Donnerstag: [
+    "🌳 Klimmzüge 6x max",
+    "🌳 Australian Rows 5x15",
+    "🌳 Chin-Ups 4x max",
+    "🌳 Dead Hang 4x60s"
+  ],
+  Freitag: ["Judo"],
+  Samstag: [
+    "🌳 Dips 6x6–10",
+    "🌳 Explosive Liegestütze 4x15",
+    "🌳 Pike Push-ups 4x12",
+    "🌳 L-Sit 4x20s"
+  ],
+  Sonntag: ["Erholung / Mobility"]
+};
 
-// DOM Elements
-let homeView, selectView, practiceView, resultsView;
+const calendar = document.getElementById("calendar");
+const weekEl = document.getElementById("week");
+const progressEl = document.getElementById("progress");
 
-// Initialize
-document.addEventListener("DOMContentLoaded", () => {
-  // Get DOM elements after page load
-  homeView = document.getElementById("home-view");
-  selectView = document.getElementById("select-view");
-  practiceView = document.getElementById("practice-view");
-  resultsView = document.getElementById("results-view");
-  
-  loadData();
-  updateStats();
-  setupEventListeners();
-});
-
-// Data Functions
-function loadData() {
-  const vocabData = localStorage.getItem(VOCABULARIES_KEY);
-  const resultsData = localStorage.getItem(PRACTICE_RESULTS_KEY);
-  
-  vocabularies = vocabData ? JSON.parse(vocabData) : [];
-  practiceResults = resultsData ? JSON.parse(resultsData) : [];
+function storageKey(day, ex) {
+  return `w${currentWeek}-${day}-${ex}`;
 }
 
-function saveVocabularies() {
-  localStorage.setItem(VOCABULARIES_KEY, JSON.stringify(vocabularies));
-}
+function render() {
+  calendar.innerHTML = "";
+  weekEl.textContent = currentWeek;
 
-function savePracticeResults() {
-  localStorage.setItem(PRACTICE_RESULTS_KEY, JSON.stringify(practiceResults));
-}
+  let done = 0;
+  let total = 0;
 
-// Stats
-function updateStats() {
-  const total = vocabularies.length;
-  const practiced = practiceResults.length;
-  const known = practiceResults.filter(r => r.known).length;
-  const unknown = practiced - known;
-  const percentage = practiced > 0 ? Math.round((known / practiced) * 100) : 0;
-  
-  document.getElementById("stat-total").textContent = total;
-  document.getElementById("stat-practiced").textContent = practiced;
-  document.getElementById("stat-known").textContent = known;
-  document.getElementById("stat-percentage").textContent = percentage + "%";
-  
-  // Enable/disable start button
-  document.getElementById("start-btn").disabled = total === 0;
-  
-  // Update lesson stats
-  updateLessonStats();
-}
+  for (const day in plan) {
+    const div = document.createElement("div");
+    div.className = "day";
+    div.innerHTML = `<h3>${day}</h3>`;
 
-function updateLessonStats() {
-  // This function is kept for compatibility but chart is rendered separately
-}
+    plan[day].forEach(ex => {
+      total++;
+      const key = storageKey(day, ex);
+      const checked = localStorage.getItem(key) === "true";
+      if (checked) done++;
 
-// Stats Modal Functions
-function showStatsModal() {
-  document.getElementById("stats-modal").classList.remove("hidden");
-  renderBarChart();
-}
+      const row = document.createElement("div");
+      row.className = "exercise";
+      row.innerHTML = `
+        <span>${ex}</span>
+        <input type="checkbox" ${checked ? "checked" : ""}>
+      `;
 
-function hideStatsModal() {
-  document.getElementById("stats-modal").classList.add("hidden");
-}
+      row.querySelector("input").addEventListener("change", e => {
+        localStorage.setItem(key, e.target.checked);
+        render();
+      });
 
-function renderBarChart() {
-  const chartContainer = document.getElementById("bar-chart");
-  
-  // Get unique lessons and their stats
-  const lessonMap = new Map();
-  vocabularies.forEach(v => {
-    if (!lessonMap.has(v.lesson_number)) {
-      lessonMap.set(v.lesson_number, { total: 0, known: 0, unknown: 0 });
-    }
-    lessonMap.get(v.lesson_number).total++;
-  });
-  
-  // Count ALL practice results per lesson (not just last, to show total practice count)
-  practiceResults.forEach(r => {
-    const vocab = vocabularies.find(v => v.id === r.vocabulary_id);
-    if (vocab && lessonMap.has(vocab.lesson_number)) {
-      const stats = lessonMap.get(vocab.lesson_number);
-      if (r.known) {
-        stats.known++;
-      } else {
-        stats.unknown++;
-      }
-    }
-  });
-  
-  const lessons = Array.from(lessonMap.entries()).sort((a, b) => a[0] - b[0]);
-  
-  if (lessons.length === 0) {
-    chartContainer.innerHTML = '<p class="no-stats">Noch keine Vokabeln geladen.</p>';
-    return;
-  }
-  
-  // Find max value for scaling
-  const maxValue = Math.max(...lessons.map(([_, stats]) => stats.known + stats.unknown), 1);
-  
-  chartContainer.innerHTML = `
-    <div class="chart-container">
-      <div class="chart-y-axis">
-        <span class="y-label">${maxValue}</span>
-        <span class="y-label">${Math.round(maxValue / 2)}</span>
-        <span class="y-label">0</span>
-      </div>
-      <div class="chart-bars">
-        ${lessons.map(([num, stats]) => {
-          const knownHeight = (stats.known / maxValue) * 100;
-          const unknownHeight = (stats.unknown / maxValue) * 100;
-          return `
-            <div class="bar-group">
-              <div class="bar-stack" title="Lektion ${num}: ${stats.known} gewusst, ${stats.unknown} nicht gewusst">
-                <div class="bar known" style="height: ${knownHeight}%"></div>
-                <div class="bar unknown" style="height: ${unknownHeight}%"></div>
-              </div>
-              <span class="bar-label">L${num}</span>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </div>
-  `;
-}
-
-// Event Listeners
-function setupEventListeners() {
-  // Navigation
-  document.getElementById("start-btn").addEventListener("click", showSelectView);
-  document.getElementById("back-to-home").addEventListener("click", showHomeView);
-  document.getElementById("back-to-select").addEventListener("click", showSelectView);
-  
-  // CSV Upload
-  document.getElementById("csv-input").addEventListener("change", handleCSVUpload);
-  
-  // Lesson Selection
-  document.getElementById("select-all-btn").addEventListener("click", selectAllLessons);
-  document.getElementById("deselect-all-btn").addEventListener("click", deselectAllLessons);
-  document.getElementById("start-practice-btn").addEventListener("click", startPractice);
-  
-  // Flashcard
-  document.getElementById("flashcard").addEventListener("click", flipCard);
-  document.getElementById("known-btn").addEventListener("click", () => answerCard(true));
-  document.getElementById("unknown-btn").addEventListener("click", () => answerCard(false));
-  
-  // Results
-  document.getElementById("practice-again-btn").addEventListener("click", () => {
-    if (selectedLessons.length === 0) {
-      showSelectView(); // Go back to selection if no lessons selected
-    } else {
-      startPractice();
-    }
-  });
-  document.getElementById("practice-wrong-btn").addEventListener("click", practiceWrongCards);
-  document.getElementById("back-home-btn").addEventListener("click", showHomeView);
-  
-  // Stats Modal
-  document.getElementById("show-stats-btn").addEventListener("click", showStatsModal);
-  document.getElementById("close-stats-btn").addEventListener("click", hideStatsModal);
-  document.getElementById("stats-modal-overlay").addEventListener("click", hideStatsModal);
-  
-  // Search
-  document.getElementById("search-input").addEventListener("input", handleSearch);
-  
-  // Reset
-  document.getElementById("reset-btn").addEventListener("click", handleReset);
-}
-
-// Search
-function handleSearch() {
-  const query = document.getElementById("search-input").value.trim().toLowerCase();
-  const resultsDiv = document.getElementById("search-results");
-  
-  if (!query) {
-    resultsDiv.classList.add("hidden");
-    resultsDiv.innerHTML = "";
-    return;
-  }
-  
-  const matches = vocabularies.filter(v =>
-    v.latin_word.toLowerCase().includes(query) ||
-    v.german_translation.toLowerCase().includes(query) ||
-    (v.forms && v.forms.toLowerCase().includes(query)) ||
-    ("l" + v.lesson_number).includes(query)
-  );
-  
-  resultsDiv.classList.remove("hidden");
-  
-  if (matches.length === 0) {
-    resultsDiv.innerHTML = '<p class="no-results">Keine Ergebnisse gefunden.</p>';
-    return;
-  }
-  
-  resultsDiv.innerHTML = `
-    <table class="search-table">
-      <thead>
-        <tr>
-          <th>Latein</th>
-          <th>Formen</th>
-          <th>Deutsch</th>
-          <th>Lektion</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${matches.map(v => `
-          <tr>
-            <td><strong>${v.latin_word}</strong></td>
-            <td>${v.forms || "–"}</td>
-            <td>${v.german_translation}</td>
-            <td>L${v.lesson_number}</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-    <p class="search-count">${matches.length} Ergebnis${matches.length !== 1 ? "se" : ""}</p>
-  `;
-}
-
-// Reset
-function handleReset() {
-  if (!confirm("Möchtest du wirklich ALLE Vokabeln und Statistiken löschen? Das kann nicht rückgängig gemacht werden!")) return;
-  
-  vocabularies = [];
-  practiceResults = [];
-  selectedLessons = [];
-  localStorage.removeItem(VOCABULARIES_KEY);
-  localStorage.removeItem(PRACTICE_RESULTS_KEY);
-  updateStats();
-  document.getElementById("search-input").value = "";
-  document.getElementById("search-results").classList.add("hidden");
-  document.getElementById("search-results").innerHTML = "";
-  document.getElementById("upload-status").className = "";
-  document.getElementById("upload-status").textContent = "";
-  document.getElementById("csv-input").value = "";
-}
-
-// CSV Upload
-function handleCSVUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const text = e.target.result;
-      const lines = text.split("\n").filter(line => line.trim());
-      
-      // Skip header if present
-      const startIndex = lines[0].toLowerCase().includes("latein") ? 1 : 0;
-      
-      const newVocabs = [];
-      console.log(`CSV: ${lines.length} Zeilen gefunden, starte bei Zeile ${startIndex}`);
-      
-      for (let i = startIndex; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue; // Skip empty lines
-        
-        const parts = parseCSVLine(line);
-        console.log(`Zeile ${i + 1}:`, parts);
-        
-        if (parts.length >= 4) {
-          // IMPORTANT: Always take the LAST element as lesson number
-          // because translations may contain unquoted semicolons that create extra parts
-          const lessonStr = parts[parts.length - 1].trim();
-          const lessonNum = parseInt(lessonStr, 10);
-          
-          // Skip if lesson number is invalid
-          if (isNaN(lessonNum)) {
-            console.warn(`Zeile ${i + 1} übersprungen: Ungültige Lektionsnummer "${lessonStr}"`);
-            continue;
-          }
-          
-          // Combine all middle parts as the German translation (in case of extra splits)
-          const germanParts = parts.slice(2, parts.length - 1);
-          const germanTranslation = germanParts.join("; ").trim();
-          
-          newVocabs.push({
-            id: generateId(),
-            latin_word: parts[0].trim(),
-            forms: parts[1].trim() || null,
-            german_translation: germanTranslation,
-            lesson_number: lessonNum,
-            created_at: new Date().toISOString()
-          });
-          console.log(`✓ Vokabel hinzugefügt: ${parts[0]} (Lektion ${lessonNum})`);
-        } else {
-          console.warn(`Zeile ${i + 1} übersprungen: Nur ${parts.length} Teile gefunden (brauche mindestens 4)`);
-        }
-      }
-      
-      if (newVocabs.length > 0) {
-        vocabularies = newVocabs;
-        practiceResults = [];
-        selectedLessons = []; // Reset selected lessons when new CSV is uploaded
-        saveVocabularies();
-        savePracticeResults();
-        updateStats();
-        showUploadStatus(`✓ ${newVocabs.length} Vokabeln erfolgreich hochgeladen!`, "success");
-      } else {
-        showUploadStatus("Keine gültigen Vokabeln gefunden.", "error");
-      }
-    } catch (error) {
-      showUploadStatus("Fehler beim Lesen der Datei.", "error");
-    }
-  };
-  reader.readAsText(file);
-}
-
-function parseCSVLine(line) {
-  const result = [];
-  let current = "";
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-    
-    if (char === '"') {
-      // Handle escaped quotes ("") inside quoted fields
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++; // Skip the next quote
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if ((char === "," || char === ";") && !inQuotes) {
-      result.push(current.trim());
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-  // Don't forget the last field
-  if (current.length > 0 || result.length > 0) {
-    result.push(current.trim());
-  }
-  
-  // Clean up quotes and whitespace
-  return result.map(s => s.replace(/^"|"$/g, "").trim());
-}
-
-// Debug function to log parsing results (can be removed in production)
-function debugParseLine(line) {
-  const parts = parseCSVLine(line);
-  console.log("Parsing line:", line);
-  console.log("Result:", parts);
-  console.log("Parts count:", parts.length);
-  return parts;
-}
-
-function showUploadStatus(message, type) {
-  const status = document.getElementById("upload-status");
-  status.textContent = message;
-  status.className = type;
-}
-
-function generateId() {
-  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-}
-
-// Navigation
-function showHomeView() {
-  homeView.classList.remove("hidden");
-  selectView.classList.add("hidden");
-  practiceView.classList.add("hidden");
-  updateStats();
-}
-
-function showSelectView() {
-  homeView.classList.add("hidden");
-  selectView.classList.remove("hidden");
-  practiceView.classList.add("hidden");
-  resultsView.classList.add("hidden");
-  renderLessons();
-}
-
-function showPracticeView() {
-  homeView.classList.add("hidden");
-  selectView.classList.add("hidden");
-  practiceView.classList.remove("hidden");
-  resultsView.classList.add("hidden");
-}
-
-// Lesson Selection
-function renderLessons() {
-  const lessonsGrid = document.getElementById("lessons-grid");
-  const lessonMap = new Map();
-  
-  vocabularies.forEach(v => {
-    if (!lessonMap.has(v.lesson_number)) {
-      lessonMap.set(v.lesson_number, 0);
-    }
-    lessonMap.set(v.lesson_number, lessonMap.get(v.lesson_number) + 1);
-  });
-  
-  const lessons = Array.from(lessonMap.entries()).sort((a, b) => a[0] - b[0]);
-  
-  lessonsGrid.innerHTML = lessons.map(([num, count]) => `
-    <div class="lesson-item ${selectedLessons.includes(num) ? 'selected' : ''}" data-lesson="${num}">
-      <div class="lesson-number">L${num}</div>
-      <div class="lesson-count">${count} Vokabeln</div>
-    </div>
-  `).join("");
-  
-  // Add click handlers
-  document.querySelectorAll(".lesson-item").forEach(item => {
-    item.addEventListener("click", () => {
-      const lesson = parseInt(item.dataset.lesson);
-      toggleLesson(lesson);
+      div.appendChild(row);
     });
-  });
-  
-  updateStartButton();
-}
 
-function toggleLesson(lesson) {
-  const index = selectedLessons.indexOf(lesson);
-  if (index > -1) {
-    selectedLessons.splice(index, 1);
-  } else {
-    selectedLessons.push(lesson);
+    calendar.appendChild(div);
   }
-  renderLessons();
+
+  progressEl.textContent = Math.round((done / total) * 100);
 }
 
-function selectAllLessons() {
-  const allLessons = [...new Set(vocabularies.map(v => v.lesson_number))];
-  selectedLessons = allLessons;
-  renderLessons();
-}
-
-function deselectAllLessons() {
-  selectedLessons = [];
-  renderLessons();
-}
-
-function updateStartButton() {
-  const btn = document.getElementById("start-practice-btn");
-  btn.disabled = selectedLessons.length === 0;
-}
-
-// Practice Mode
-function startPractice() {
-  currentPracticeCards = vocabularies
-    .filter(v => selectedLessons.includes(v.lesson_number))
-    .sort(() => Math.random() - 0.5);
-  
-  // Check if there are cards to practice
-  if (currentPracticeCards.length === 0) {
-    alert("Keine Vokabeln in den ausgewählten Lektionen gefunden.");
-    return;
+document.getElementById("next").onclick = () => {
+  if (currentWeek < TOTAL_WEEKS) {
+    currentWeek++;
+    localStorage.setItem("week", currentWeek);
+    render();
   }
-  
-  currentCardIndex = 0;
-  sessionResults = { known: 0, unknown: 0, wrongCards: [] };
-  
-  showPracticeView();
-  
-  // Reset visibility after view is shown
-  const practiceContainer = document.querySelector(".practice-container");
-  const resultsViewEl = document.getElementById("results-view");
-  if (practiceContainer) practiceContainer.classList.remove("hidden");
-  if (resultsViewEl) resultsViewEl.classList.add("hidden");
-  
-  showCard();
-}
+};
 
-function showCard() {
-  if (currentCardIndex >= currentPracticeCards.length) {
-    showResults();
-    return;
+document.getElementById("prev").onclick = () => {
+  if (currentWeek > 1) {
+    currentWeek--;
+    localStorage.setItem("week", currentWeek);
+    render();
   }
-  
-  const card = currentPracticeCards[currentCardIndex];
-  const flashcard = document.getElementById("flashcard");
-  
-  // Reset card
-  flashcard.classList.remove("flipped");
-  document.getElementById("answer-buttons").classList.add("hidden");
-  
-  // Update content
-  document.getElementById("latin-word").textContent = card.latin_word;
-  document.getElementById("german-word").textContent = card.german_translation;
-  document.getElementById("german-forms").textContent = card.forms || "";
-  
-  // Update progress
-  const progress = ((currentCardIndex + 1) / currentPracticeCards.length) * 100;
-  document.getElementById("progress-text").textContent = 
-    `Karte ${currentCardIndex + 1} von ${currentPracticeCards.length}`;
-  document.getElementById("progress-fill").style.width = progress + "%";
-}
+};
 
-function flipCard() {
-  const flashcard = document.getElementById("flashcard");
-  if (!flashcard.classList.contains("flipped")) {
-    flashcard.classList.add("flipped");
-    document.getElementById("answer-buttons").classList.remove("hidden");
+document.getElementById("resetWeek").onclick = () => {
+  for (const day in plan) {
+    plan[day].forEach(ex => {
+      localStorage.removeItem(storageKey(day, ex));
+    });
   }
-}
+  render();
+};
 
-function answerCard(known) {
-  const card = currentPracticeCards[currentCardIndex];
-  
-  // Record result
-  practiceResults.push({
-    id: generateId(),
-    vocabulary_id: card.id,
-    known: known,
-    practiced_at: new Date().toISOString()
-  });
-  savePracticeResults();
-  
-  // Update session stats
-  if (known) {
-    sessionResults.known++;
-  } else {
-    sessionResults.unknown++;
-    sessionResults.wrongCards.push(card);
-  }
-  
-  // Next card
-  currentCardIndex++;
-  showCard();
-}
-
-// Results
-function showResults() {
-  const practiceContainer = document.querySelector(".practice-container");
-  const resultsViewEl = document.getElementById("results-view");
-  
-  if (practiceContainer) practiceContainer.classList.add("hidden");
-  if (resultsViewEl) resultsViewEl.classList.remove("hidden");
-  
-  const total = sessionResults.known + sessionResults.unknown;
-  const percentage = total > 0 ? Math.round((sessionResults.known / total) * 100) : 0;
-  
-  document.getElementById("result-total").textContent = total;
-  document.getElementById("result-known").textContent = sessionResults.known;
-  document.getElementById("result-unknown").textContent = sessionResults.unknown;
-  document.getElementById("result-percentage").textContent = percentage + "%";
-  
-  // Show/hide "practice wrong" button based on whether there are wrong cards
-  const practiceWrongBtn = document.getElementById("practice-wrong-btn");
-  if (practiceWrongBtn) {
-    if (sessionResults.wrongCards.length > 0) {
-      practiceWrongBtn.classList.remove("hidden");
-      practiceWrongBtn.textContent = `🔄 Falsche wiederholen (${sessionResults.wrongCards.length})`;
-    } else {
-      practiceWrongBtn.classList.add("hidden");
-    }
-  }
-  
-  // Update global stats
-  updateStats();
-}
-
-// Practice only wrong cards from last session
-function practiceWrongCards() {
-  if (sessionResults.wrongCards.length === 0) {
-    alert("Keine falschen Vokabeln zum Wiederholen.");
-    return;
-  }
-  
-  currentPracticeCards = [...sessionResults.wrongCards].sort(() => Math.random() - 0.5);
-  currentCardIndex = 0;
-  sessionResults = { known: 0, unknown: 0, wrongCards: [] };
-  
-  showPracticeView();
-  
-  const practiceContainer = document.querySelector(".practice-container");
-  const resultsViewEl = document.getElementById("results-view");
-  if (practiceContainer) practiceContainer.classList.remove("hidden");
-  if (resultsViewEl) resultsViewEl.classList.add("hidden");
-  
-  showCard();
-}
+render();
